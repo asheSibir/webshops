@@ -537,7 +537,7 @@ main {
     width: 100vw;
     height: 100vh;
     z-index: 990;
-    background-color: #ffffff;
+    background-color: rgba(54, 52, 52, 0.15);
 }
 
 .modal__content {
