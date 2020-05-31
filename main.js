@@ -7,7 +7,9 @@ const tvShowList = document.querySelector('.tv-shows__list'),
     hamburger = document.querySelector('.hamburger'),
     tvShows = document.querySelector('.tv-shows'),
     searchForm = document.querySelector('.search__form'),
-    searchInput = document.querySelector('.search__form-input');
+    searchInput = document.querySelector('.search__form-input'),
+    dropdownItems = document.querySelectorAll('.dropdown'),
+    tvShowsHead = document.querySelector('.tv-shows__head');
 
 
 //ЛОАДЕР
@@ -15,15 +17,22 @@ const loading = document.createElement('div');
 loading.className = 'loading';
 
 //РАБОТА ЛЕВОГО МЕНЮ
+const closeDropdown = () => {
+    dropdownItems.forEach(item => {
+        if (item.classList.contains('active')) {
+            item.classList.remove('active');
+        }
+    });
+}
 hamburger.addEventListener('click', event => {
     leftMenu.classList.toggle('openMenu');
     hamburger.classList.toggle('open');
 });
-
 document.addEventListener('click', (ev) => {
     if (!ev.target.closest('.openMenu')){
         leftMenu.classList.remove('openMenu');
         hamburger.classList.remove('open');
+        closeDropdown();
     }
 });
 leftMenu.addEventListener('click', event => {
@@ -34,6 +43,20 @@ leftMenu.addEventListener('click', event => {
         leftMenu.classList.add('openMenu');
         hamburger.classList.add('open');
     }
+
+    if (target.closest('#top-rated')){
+        dbService.getStatistic('top_rated').then(renderCard);
+    }
+    if (target.closest('#popular')){
+        dbService.getStatistic('popular').then(renderCard);
+    }
+    if (target.closest('#today')){
+        dbService.getStatistic('airing_today').then(renderCard);
+    }
+    if (target.closest('#week')){
+        dbService.getStatistic('on_the_air').then(renderCard);
+    }
+
 });
 
 // КЛАСС
@@ -57,13 +80,19 @@ const DBService = class {
     }
     getTvShow = id => this.getData(`${SERVER}tv/${id}?api_key=${API_KEY}&language=ru-RU`)
 
-
+    getStatistic = (feature) => this.getData(`${SERVER}tv/${feature}?api_key=${API_KEY}&language=ru-RU`)
 }
 
-const renderCard = response => {
+const dbService = new DBService();
+
+const renderCard = (response, target) => {
     tvShowList.textContent = '';
+    if (target){
+        console.log(target);
+    }
 
     if (response.results.length) {
+        document.querySelector('.tv-shows__head').textContent = 'Результаты поиска';
         response.results.forEach(({
                                 backdrop_path: backdrop,
                                 name: title,
@@ -94,8 +123,9 @@ const renderCard = response => {
             if (voteVal.textContent === ''){
                 voteVal.remove();
             };
-
-
+            if (leftMenu.classList.contains('openMenu')){
+               leftMenu.classList.remove('openMenu');
+            }
             //Смена картинок
             card.addEventListener('mouseenter', event => {
                 card.querySelector('.tv-card__img').src = backdropIMG;
@@ -117,7 +147,7 @@ searchForm.addEventListener('submit', event => {
 
     if (value){
         tvShows.append(loading);
-        new DBService().getSearchResult(value).then(renderCard);
+        dbService.getSearchResult(value).then(renderCard);
     }
     searchInput.value = '';
 });
@@ -140,7 +170,7 @@ tvShowList.addEventListener('click', event => {
 
         preloader.style.display = 'block';
         //new DBService().getTestCard()
-        new DBService().getTvShow(card.id)
+        dbService.getTvShow(card.id)
             .then(response => {
                 preloader.style.display = 'none';
                 console.log(response.poster_path);
@@ -160,10 +190,14 @@ tvShowList.addEventListener('click', event => {
                 document.body.style.overflow = 'hidden';
                 modal.classList.remove('hide');
             })
+            .finally(() => {
+                preloader.style.display = '';
+            })
 
 
 
     }
+    console.log(target);
 });
 
 modal.addEventListener('click', event => {
@@ -173,6 +207,8 @@ modal.addEventListener('click', event => {
         modal.classList.add('hide');
     }
 });
+
+
 
 
 
