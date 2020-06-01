@@ -9,7 +9,10 @@ const tvShowList = document.querySelector('.tv-shows__list'),
     searchForm = document.querySelector('.search__form'),
     searchInput = document.querySelector('.search__form-input'),
     dropdownItems = document.querySelectorAll('.dropdown'),
-    tvShowsHead = document.querySelector('.tv-shows__head');
+    tvShowsHead = document.querySelector('.tv-shows__head'),
+    faSearch = document.getElementById('search'),
+    pagination = document.querySelector('.pagination');
+let queryOfSet = searchInput.value;
 
 
 //ЛОАДЕР
@@ -45,18 +48,46 @@ leftMenu.addEventListener('click', event => {
     }
 
     if (target.closest('#top-rated')){
-        dbService.getStatistic('top_rated').then(renderCard);
+        dbService.getStatistic('top_rated').then(renderCard).finally(changeTitle(target));
     }
     if (target.closest('#popular')){
-        dbService.getStatistic('popular').then(renderCard);
+        dbService.getStatistic('popular').then(renderCard).finally(changeTitle(target));
     }
     if (target.closest('#today')){
-        dbService.getStatistic('airing_today').then(renderCard);
+        dbService.getStatistic('airing_today').then(renderCard).finally(changeTitle(target));
     }
     if (target.closest('#week')){
-        dbService.getStatistic('on_the_air').then(renderCard);
+        dbService.getStatistic('on_the_air').then(renderCard).finally(changeTitle(target));
     }
-
+    if (target.closest('.fa-search')){
+        tvShowsHead.textContent = '';
+        tvShowList.textContent = '';
+        leftMenu.classList.add('openMenu');
+        const searchCustom = document.createElement('form');
+        searchCustom.innerHTML = `
+        <form class="search__form">
+            <label class="search__form-block">
+                <input type="text" class="search__form-input" id="searchText2"
+                    placeholder="Введи название...">
+            </label>
+        </form>`;
+        faSearch.querySelector('span').textContent = 'ТЕКСТ ДЛЯ ПОИСКА';
+        faSearch.querySelector('.fa-search').style.display = 'inline-block';
+        searchCustom.style.display = "inline-block";
+        searchCustom.style.color = '#fff';
+        searchCustom.querySelector('input').style.cssText = `
+        text-transform: uppercase;
+        text-decoration: none;
+        color: #fff;
+        text-align: center;
+        `;
+        faSearch.append(searchCustom);
+        searchCustom.addEventListener('submit', event => {
+            event.preventDefault();
+            doAfterSubmit(searchCustom.querySelector('input'));
+            searchCustom.remove();
+        });
+    }
 });
 
 // КЛАСС
@@ -81,18 +112,27 @@ const DBService = class {
     getTvShow = id => this.getData(`${SERVER}tv/${id}?api_key=${API_KEY}&language=ru-RU`)
 
     getStatistic = (feature) => this.getData(`${SERVER}tv/${feature}?api_key=${API_KEY}&language=ru-RU`)
+
+    getDataFromPage = (query, page) => {
+        return this.getData(`${SERVER}search/tv?api_key=${API_KEY}&query=${query}&language=ru-RU&page=${page}`)
+    }
 }
 
 const dbService = new DBService();
 
-const renderCard = (response, target) => {
+const renderCard = (response) => {
     tvShowList.textContent = '';
-    if (target){
-        console.log(target);
+    pagination.querySelectorAll('li').forEach(li => li.remove());
+    if (response.total_pages > 1){
+        for (let page = 0; page < response.total_pages; page++){
+            pagination.insertAdjacentHTML('beforeend', `<li class="circle-point">${page+1}</li>`);
+            if (page === 0) {
+                pagination.querySelector('li').classList.add('active-circle');
+            }
+        }
     }
 
     if (response.results.length) {
-        document.querySelector('.tv-shows__head').textContent = 'Результаты поиска';
         response.results.forEach(({
                                 backdrop_path: backdrop,
                                 name: title,
@@ -139,17 +179,44 @@ const renderCard = (response, target) => {
         document.querySelector('.tv-shows__head').textContent = 'По вашему запросу сериалов не найдено';
     }
 
-
+    if (pagination.querySelector('li')) {
+        const pages = pagination.querySelectorAll('li');
+        pages.forEach(page => {
+            page.addEventListener('click', event => {
+                document.querySelector('.active-circle').classList.remove('active-circle');
+                event.target.classList.add('active-circle');
+                dbService.getDataFromPage(queryOfSet, event.target.textContent).then(renderCard);
+                console.log(event.target.textContent);
+            });
+        })
+    }
 }
-searchForm.addEventListener('submit', event => {
-    event.preventDefault();
-    const value = searchInput.value.trim();
+
+const changeTitle = (elem) => {
+    tvShowsHead.textContent = elem.textContent;
+}
+
+const doAfterSubmit = (elem) => {
+    tvShowsHead.textContent = 'Результаты поиска';
+    const value = elem.value.trim();
 
     if (value){
         tvShows.append(loading);
         dbService.getSearchResult(value).then(renderCard);
     }
     searchInput.value = '';
+}
+
+// searchForm.addEventListener('submit', event => {
+//     event.preventDefault();
+//     doAfterSubmit();
+//});
+
+document.querySelectorAll('form').forEach(form => {
+    form.addEventListener('submit', event => {
+        event.preventDefault();
+        doAfterSubmit(searchInput);
+    });
 });
 
 
@@ -173,7 +240,6 @@ tvShowList.addEventListener('click', event => {
         dbService.getTvShow(card.id)
             .then(response => {
                 preloader.style.display = 'none';
-                console.log(response.poster_path);
                 if (response.poster_path){
                     tvCardImg.src = IMG_URL + response.poster_path;
                 } else {
@@ -193,11 +259,7 @@ tvShowList.addEventListener('click', event => {
             .finally(() => {
                 preloader.style.display = '';
             })
-
-
-
     }
-    console.log(target);
 });
 
 modal.addEventListener('click', event => {
@@ -207,6 +269,9 @@ modal.addEventListener('click', event => {
         modal.classList.add('hide');
     }
 });
+
+
+
 
 
 

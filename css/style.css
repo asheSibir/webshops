@@ -1195,3 +1195,28 @@ div:after {
         background-color: #00838f;
     }
 }
+
+.pagination {
+    display: inline-block;
+    text-align: center;
+    margin: 0 auto;
+}
+
+.circle-point {
+    display: inline-block;
+    height: 3rem;
+    width: 3rem;
+    border-radius: 10rem;
+    background-color: #fff;
+    border: 2px solid #00838f;
+    margin: 0 2rem;
+    color: #00838f;
+    padding-top: 0.8rem;
+    font-size: larger;
+}
+
+.active-circle {
+    background-color: #00838f;
+    border: 2px solid #fff;
+    color: #fff;
+}
