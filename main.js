@@ -1,6 +1,8 @@
+
 const IMG_URL = 'https://image.tmdb.org/t/p/w185_and_h278_bestv2';
 const SERVER = 'https://api.themoviedb.org/3/';
 const API_KEY = '1909b1d8171b12d0b7da4e9cd8812dc6';
+
 const tvShowList = document.querySelector('.tv-shows__list'),
     modal = document.querySelector('.modal'),
     leftMenu = document.querySelector('.left-menu'),
@@ -13,7 +15,6 @@ const tvShowList = document.querySelector('.tv-shows__list'),
     faSearch = document.getElementById('search'),
     pagination = document.querySelector('.pagination');
 let queryOfSet = searchInput.value;
-
 
 //ЛОАДЕР
 const loading = document.createElement('div');
@@ -107,8 +108,13 @@ const DBService = class {
         return this.getData('card.json');
     }
     getSearchResult = query => {
-        return this.getData(`${SERVER}search/tv?api_key=${API_KEY}&query=${query}&language=ru-RU`)
+        this.temp = `${SERVER}search/tv?api_key=${API_KEY}&query=${query}&language=ru-RU`;
+        return this.getData(this.temp);
     }
+    getNextPage = page => {
+        return this.getData(`${this.temp}&page=${page}`);
+    }
+
     getTvShow = id => this.getData(`${SERVER}tv/${id}?api_key=${API_KEY}&language=ru-RU`)
 
     getStatistic = (feature) => this.getData(`${SERVER}tv/${feature}?api_key=${API_KEY}&language=ru-RU`)
@@ -123,14 +129,6 @@ const dbService = new DBService();
 const renderCard = (response) => {
     tvShowList.textContent = '';
     pagination.querySelectorAll('li').forEach(li => li.remove());
-    if (response.total_pages > 1){
-        for (let page = 0; page < response.total_pages; page++){
-            pagination.insertAdjacentHTML('beforeend', `<li class="circle-point">${page+1}</li>`);
-            if (page === 0) {
-                pagination.querySelector('li').classList.add('active-circle');
-            }
-        }
-    }
 
     if (response.results.length) {
         response.results.forEach(({
@@ -164,7 +162,7 @@ const renderCard = (response) => {
                 voteVal.remove();
             };
             if (leftMenu.classList.contains('openMenu')){
-               leftMenu.classList.remove('openMenu');
+            leftMenu.classList.remove('openMenu');
             }
             //Смена картинок
             card.addEventListener('mouseenter', event => {
@@ -179,14 +177,28 @@ const renderCard = (response) => {
         document.querySelector('.tv-shows__head').textContent = 'По вашему запросу сериалов не найдено';
     }
 
+    if (response.total_pages > 1){
+        for (let page = 0; page < response.total_pages; page++){
+            pagination.insertAdjacentHTML('beforeend', `<li class="circle-point"><a href="#">${page+1}</a></li>`);
+            // if (page === 0) {
+            //     pagination.querySelector('li').classList.add('active-circle');
+            // }
+        }
+    }
+
     if (pagination.querySelector('li')) {
         const pages = pagination.querySelectorAll('li');
-        pages.forEach(page => {
+        pages.forEach((page, ind) => {
+            // if (ind === 0){
+            //     page.classList.add('active-circle');
+            // }
             page.addEventListener('click', event => {
-                document.querySelector('.active-circle').classList.remove('active-circle');
-                event.target.classList.add('active-circle');
-                dbService.getDataFromPage(queryOfSet, event.target.textContent).then(renderCard);
-                console.log(event.target.textContent);
+                event.preventDefault();
+                // document.querySelector('.active-circle').classList.remove('active-circle');
+                // event.target.classList.remove('circle-point');
+                // event.target.classList.add('active-circle');
+                //dbService.getDataFromPage(queryOfSet, event.target.textContent).then(renderCard);
+                dbService.getNextPage(event.target.textContent).then(renderCard);
             });
         })
     }
@@ -269,14 +281,5 @@ modal.addEventListener('click', event => {
         modal.classList.add('hide');
     }
 });
-
-
-
-
-
-
-
-
-
 
 

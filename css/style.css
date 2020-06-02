@@ -1197,22 +1197,26 @@ div:after {
 }
 
 .pagination {
-    display: inline-block;
-    text-align: center;
+    display: flex;
+    justify-content: space-evenly;
     margin: 0 auto;
+    width: 50%;
+}
+
+.circle-point, .active-circle {
+    height: 2.5rem;
+    width: 2.5rem;
+    border-radius: 10rem;
+    margin: 0 2rem;
+    font-size: larger;
+    text-align: center;
+    padding-top: 0.5rem;
 }
 
 .circle-point {
-    display: inline-block;
-    height: 3rem;
-    width: 3rem;
-    border-radius: 10rem;
     background-color: #fff;
     border: 2px solid #00838f;
-    margin: 0 2rem;
     color: #00838f;
-    padding-top: 0.8rem;
-    font-size: larger;
 }
 
 .active-circle {
